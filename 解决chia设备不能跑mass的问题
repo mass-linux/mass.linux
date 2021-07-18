@@ -1,0 +1,61 @@
+解决chia硬件低配不能在上面启动mass开启双挖的问题。
+前景需求：一台能跑mass的设备，系统是ubuntu。部署参考和chia双挖教程。
+本教程采用samba，开启共享文件夹的形式让mass能识别到k32图。（请将机器置于同一个局域网下）
+
+正文如下：（chia机）
+
+下载samba：sudo apt-get install samba samba-common
+FAQ:
+如果出现apt install时候遇到E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing
+那么执行sudo apt-get update --fix-missing
+【如果执行遇到 /var/lib/dpkg/lock - open (13: 权限不够)，那么强制解锁：sudo rm /var/cache/apt/archives/lock     sudo rm /var/lib/dpkg/lock】
+
+配置samba服务：sudo vim /etc/samba/smb.conf
+在文件最后加上以下内容：
+[samba]（对外名称）
+path = /chia文件所在目录，把它共享出来
+available = yes
+writeable = yes
+security = share
+browseable = yes
+guest ok = yes
+添加共享用户：sudo useradd samba 
+创造密码：sudo smbpasswd -a samba
+重启服务器：sudo /etc/init.d/smbd restart
+如果防火墙开启，请关闭防火墙：service iptables stop
+更改chia目录权限：chmod 777 目录名
+到此，你的chia机子已经开好了共享目录。就等你的mass机子来连接了。
+
+（mass机）
+
+
+下载samba：sudo apt-get install smbclient
+查看chia机的共享目录： smbclient -L chia机ip地址
+    是否有共享目录。
+连接共享目录：smbclient //ip地址/samba
+成功后出现提示符smb:\>，下面就可以开始操作。
+将共享目录挂载到mass机：mount -t cifs -o username=xxx,password=xxx //ip地址/samba /chia文件所在目录
+查看是否挂载上：df -h
+
+
+
+smbclient 常用命令如下：（供参考不使用）
+ ?或help [command]         提供关于帮助或某个命令的帮助   
+ ![shell command]        执行所用的SHELL命令，或让用户进入 SHELL提示符    
+ cd [目录]        切换到服务器端的指定目录，如未指定，则 smbclient 返回当前本地目录    
+ lcd [目录]        切换到客户端指定的目录；    
+ dir 或ls        列出当前目录下的文件；    
+ exit 或quit        退出smbclient      
+ get file1  file2        从服务器上下载file1，并以文件名file2存在本地机上；如果不想改名，可以把file2省略 
+ mget file1 file2 file3  filen        从服务器上下载多个文件；    
+ md或mkdir 目录        在服务器上创建目录    
+ rd或rmdir   目录        删除服务器上的目录    
+ put file1 [file2]        向服务器上传一个文件file1,传到服务器上改名为file2；
+ mput file1 file2 filen  向服务器上传多个文件
+
+
+
+
+
+
+
